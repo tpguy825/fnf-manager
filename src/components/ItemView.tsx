@@ -1,40 +1,40 @@
+import { type ProjectApi } from "../tools/zodjson";
+
 export default function ItemView({
-	imageurl,
-	title,
-	versions,
-	description,
-	authors,
-	subtitle,
+	project: {
+		name,
+		subtitle,
+		description,
+		authors,
+		versions,
+		images: { banner: bannerimageurl, icon: iconimageurl },
+	},
 }: {
-	imageurl: string;
-	title: string;
-	versions: ModVersion[];
-	description: string;
-	authors: { name: string; role: string }[];
-	subtitle: string;
+	project: ProjectApi;
 }) {
 	return (
 		<div>
-			<div class="h-96 w-full bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url("${imageurl}")` }}>
+			<div
+				class="h-96 w-full bg-cover bg-center bg-no-repeat"
+				style={{ backgroundImage: `url("${bannerimageurl}")` }}>
 				<div class="absolute h-full w-full">
 					<div class="m-auto mt-56 h-40 w-full bg-black bg-opacity-80 text-white backdrop-blur sm:rounded-xl md:h-32 md:max-w-[45rem]">
 						<div class="grid h-full w-full grid-cols-4">
-							<div class="col-span-3 my-auto ml-8 grid">
-								<div class="text-2xl font-extrabold">{title}</div>
-								<div>{subtitle}</div>
+							<div class="flex">
+								<img src={iconimageurl} class="h-24 w-24 m-auto" />
+								<div class="col-span-3 my-auto ml-8 grid">
+									<div class="text-2xl font-extrabold">{name}</div>
+									<div>{subtitle}</div>
+								</div>
 							</div>
 							<div class="ml-auto mr-4 grid grid-cols-1 gap-2 py-4 bg-transparent">
 								<div class="relative">
 									<select
 										class="w-32 rounded-lg border-2 border-gray-400 bg-opacity-20 bg-black text-green p-2 cursor-pointer"
-										placeholder={versions.find((v) => Boolean(v.default))?.optionvalue}>
+										placeholder={versions.find((v) => Boolean(v.default))?.v}>
 										{versions.map((v, i) => (
-											<option
-												selected={v.default}
-												value={v.optionvalue}
-												key={i}
-												class="bg-transparent">
-												{v.optiontext}
+											<option selected={v.default} value={v.v} key={i} class="bg-transparent">
+												v{v.v}
 											</option>
 										))}
 									</select>
@@ -75,11 +75,4 @@ export default function ItemView({
 			</div>
 		</div>
 	);
-}
-
-interface ModVersion {
-	// TODO
-	optionvalue: string;
-	optiontext: string;
-	default?: boolean;
 }
