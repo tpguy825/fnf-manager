@@ -83,4 +83,3 @@ interface ModVersion {
 	optiontext: string;
 	default?: boolean;
 }
-
