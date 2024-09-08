@@ -34,6 +34,7 @@ export const DBSchema = z
 						),
 						{ message: "Authors must be an array" },
 					),
+					url: z.string({ message: "URL is required" }).url("Invalid URL"),
 				},
 				{
 					message: "Project object is required",
@@ -69,6 +70,9 @@ export const projectSchema = z
 				{
 					v: z.string({ message: "Version is required" }),
 					download: z.string({ message: "Download URL is required" }).url("Invalid URL"),
+					downloadhash: z
+						.string({ message: "Download hash is required" }) // sha512
+						.regex(/^[a-f0-9]{128}$/, "Download hash must be a valid sha512 hash"),
 					changes: z.string({ message: "Changelist must be a string" }).optional(),
 					default: z.boolean({ message: "is default version must be a boolean" }).optional().default(false),
 					modified: z
@@ -82,6 +86,7 @@ export const projectSchema = z
 			{ message: "Versions must be an array" },
 		),
 		id: z.string({ message: "ID is required" }).ulid("Invalid ID"),
+		url: z.string({ message: "URL is required" }).url("Invalid URL"),
 		images: z.object(
 			{
 				icon: z
@@ -105,32 +110,41 @@ await Bun.write("fnf-manager-assets/db-schema.json", JSON.stringify(dbjsonSchema
 const projectjsonSchema = zodToJsonSchema(projectSchema, "projectSchema");
 await Bun.write("fnf-manager-assets/project-schema.json", JSON.stringify(projectjsonSchema, null, 2));
 
-// Check current db passes
-try {
-	const db: DBApi = DBSchema.parse(await Bun.file("./fnf-manager-assets/db.json").json());
-	console.log("DB passes, last updated", new Date(db.updated));
-} catch (e) {
-	console.error("DB failed", e);
-}
-
-// Check all projects pass
-const glob = new Bun.Glob("./fnf-manager-assets/*/index.json");
-let passed = 0,
-	total = 0;
-for await (const file of glob.scan()) {
+export async function check() {
+	// Check current db passes
 	try {
-		const project: ProjectApi = projectSchema.parse(await Bun.file(file).json());
-		let defaults = 0;
-		for (const version of project.versions) {
-			if (version.default) defaults++;
-		}
-		if (defaults !== 1) throw new Error("Project must have exactly one default version, has " + defaults);
-
-		console.log("Project passes", project.name, project.id, "last updated", new Date(project.updated));
-		passed++;
+		const db: DBApi = DBSchema.parse(await Bun.file("./fnf-manager-assets/db.json").json());
+		console.log("DB passes, last updated", new Date(db.updated));
 	} catch (e) {
-		console.error("Project failed", file, e);
+		console.error("DB failed", e);
+		return false
 	}
-	total++;
+
+	// Check all projects pass
+	const glob = new Bun.Glob("./fnf-manager-assets/*/index.json");
+	let passed = 0,
+		total = 0;
+	for await (const file of glob.scan()) {
+		try {
+			const project: ProjectApi = projectSchema.parse(await Bun.file(file).json());
+			let defaults = 0;
+			for (const version of project.versions) {
+				if (version.default) defaults++;
+			}
+			if (defaults !== 1) throw new Error("Project must have exactly one default version, has " + defaults);
+
+			console.log("Project passes", project.name, project.id, "last updated", new Date(project.updated));
+			passed++;
+		} catch (e) {
+			console.error("Project failed", file, e);
+		}
+		total++;
+	}
+	console.log("Projects passed", passed, "out of", total, "(" + Math.round((passed / total) * 10000) / 100 + "%)");
+	if (passed !== total) return false;
 }
-console.log("Projects passed", passed, "out of", total, "(" + Math.round((passed / total) * 10000) / 100 + "%)");
+
+// if running as a script, check the files
+if (import.meta.main) {
+	await check();
+}
