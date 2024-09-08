@@ -18,11 +18,11 @@ export default function ItemView({
 				class="h-96 w-full bg-cover bg-center bg-no-repeat"
 				style={{ backgroundImage: `url("${bannerimageurl}")` }}>
 				<div class="absolute h-full w-full">
-					<div class="m-auto mt-56 h-40 w-full bg-black bg-opacity-80 text-white backdrop-blur sm:rounded-xl md:h-32 md:max-w-[45rem]">
+					<div class="m-auto mt-56 h-40 w-full bg-black bg-opacity-80 text-white backdrop-blur sm:rounded-xl md:h-32 md:max-w-[50rem]">
 						<div class="grid h-full w-full grid-cols-4">
-							<div class="flex">
-								<img src={iconimageurl} class="h-24 w-24 m-auto" />
-								<div class="col-span-3 my-auto ml-8 grid">
+							<div class="flex col-span-3">
+								<img src={iconimageurl} class="h-24 w-24 ml-8 my-auto" />
+								<div class="my-auto ml-8 grid">
 									<div class="text-2xl font-extrabold">{name}</div>
 									<div>{subtitle}</div>
 								</div>
@@ -60,17 +60,23 @@ export default function ItemView({
 					</div>
 				</div>
 			</div>
-			<div class="grid grid-cols-2">
-				<div>{description}</div>
-				<div>
-					authors:
+			<div class="mx-auto justify-center mt-8 grid w-full grid-cols-1 sm:flex sm:max-w-[48rem] md:max-w-[56rem] lg:max-w-[64rem] sm:px-0 px-4">
+				<div class="rounded-lg border sm:w-56">
+					<div class="border-b p-3 text-xl font-bold">Authors</div>
 					<ul>
 						{authors.map((a, i) => (
-							<li key={i}>
-								{a.name} - {a.role}
+							<li key={i} class={i === authors.length - 1 ? "p-3" : "border-b p-3"}>
+								<div class="text-xl">{a.name}</div>
+								<div class="text-sm">{a.role}</div>
 							</li>
 						))}
 					</ul>
+				</div>
+				<div
+					class="mt-4 rounded-lg border p-3 sm:ml-4 sm:mt-0 sm:w-[24rem] md:w-[32rem] lg:w-[44rem]"
+					style={{ overflowWrap: "break-word" }}>
+					{/* markdown when???????? (tpguy825 - 02:23AM 08/09/2024) */}
+					{description}
 				</div>
 			</div>
 		</div>
