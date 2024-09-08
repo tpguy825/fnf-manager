@@ -8,7 +8,7 @@ export default function Item({ id }: { id: string }) {
 
 	useEffect(() => {
 		// fetch the project details
-		json<ProjectApi>("/" + id + "/index.json").then(setDetails);
+		json<ProjectApi>("/" + id + "/index.json?f").then(setDetails);
 	}, [id]);
 
 	if (!details) {
