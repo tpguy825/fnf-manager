@@ -1,5 +1,6 @@
 import { JSX } from "preact/jsx-runtime";
 import { type ProjectApi } from "../tools/zodjson";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function ItemView({ project }: { project: ProjectApi }) {
 	const {
@@ -58,16 +59,20 @@ export default function ItemView({ project }: { project: ProjectApi }) {
 					</div>
 				</div>
 			</div>
-			<div class="mx-auto justify-center mt-8 grid w-full grid-cols-1 sm:flex sm:max-w-[48rem] md:max-w-[50rem] lg:max-w-[64rem] md:px-0 px-4 mb-4">
+			<div class="mx-auto justify-center mt-4 grid w-full grid-cols-1 sm:flex sm:max-w-[48rem] md:max-w-[50rem] lg:max-w-[64rem] md:px-0 px-4 mb-4">
 				<div class="rounded-lg border dark:border-zinc-600 sm:w-56">
 					<div class="border-b dark:border-zinc-600 p-3 text-xl font-bold">Authors</div>
 					<ul>
-						{authors.map((a, i) => (
-							<li key={i} class="border-b dark:border-zinc-600 p-3">
-								<div class="text-xl">{a.name}</div>
-								<div class="text-sm">{a.role}</div>
-							</li>
-						))}
+						{authors
+							.filter((e) => !e.sidehide)
+							// first 5 elements, if more than 5 are main then show all main
+							.slice(0, Math.min(5, authors.filter((e) => e.main).length))
+							.map((a, i) => (
+								<li key={i} class="border-b dark:border-zinc-600 p-3">
+									<div class="text-xl">{a.name}</div>
+									<div class="text-sm">{a.role}</div>
+								</li>
+							))}
 						<li class="p-3">
 							<div class="text-xl font-bold">Share</div>
 							<Share item={project} />
@@ -76,9 +81,10 @@ export default function ItemView({ project }: { project: ProjectApi }) {
 				</div>
 				<div
 					class="mt-4 rounded-lg border dark:border-zinc-600 p-3 sm:ml-4 sm:mt-0 sm:w-[24rem] md:w-[32rem] lg:w-[44rem]"
-					style={{ overflowWrap: "break-word" }}>
-					{/* markdown when???????? (tpguy825 - 02:23AM 08/09/2024) */}
-					{description}
+					style={{ overflowWrap: "break-word" }}
+					dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }}>
+					{/* markdown when???????? (tpguy825 - 02:23 08/09/2024) */}
+					{/* okay gamebanana uses html instead (tpguy825 - 00:36 14/09/2024) */}
 				</div>
 			</div>
 		</div>

@@ -10,6 +10,9 @@ export const DBSchema = z
 					name: z.string({ message: "Name is required" }),
 					subtitle: z.string({ message: "Subtitle is required" }),
 					id: z.string({ message: "ID is required" }).ulid("Invalid ID"),
+					platforms: z.enum(["linux", "windows", "both"], {
+						message: "Platform must be 'linux', 'windows' or 'both'",
+					}),
 					images: z.object(
 						{
 							icon: z
@@ -25,8 +28,11 @@ export const DBSchema = z
 						z.object(
 							{
 								name: z.string({ message: "Author name is required" }),
-								main: z.boolean({ message: "Author main is required" }).optional().default(false),
+								main: z.boolean({ message: "Author main is required" }).optional(),
 								role: z.string({ message: "Author role is required" }),
+
+								// should this person be hidden on the left on itemview?
+								sidehide: z.boolean({ message: "Author sidehide must be boolean" }).optional(),
 							},
 							{
 								message: "Author object is required",
@@ -56,8 +62,11 @@ export const projectSchema = z
 			z.object(
 				{
 					name: z.string({ message: "Author name is required" }),
-					main: z.boolean({ message: "Author main is required" }).optional().default(false),
+					main: z.boolean({ message: "Author main is required" }).optional(),
 					role: z.string({ message: "Author role is required" }),
+
+					// should this person be hidden on the left on itemview?
+					sidehide: z.boolean({ message: "Author sidehide must be boolean" }).optional(),
 				},
 				{
 					message: "Author object is required",
@@ -65,19 +74,43 @@ export const projectSchema = z
 			),
 			{ message: "Authors must be an array" },
 		),
+		platforms: z.enum(["linux", "windows", "both"], { message: "Platform must be 'linux', 'windows' or 'both'" }),
 		versions: z.array(
 			z.object(
 				{
 					v: z.string({ message: "Version is required" }),
-					download: z.string({ message: "Download URL is required" }).url("Invalid URL"),
-					downloadhash: z
-						.string({ message: "Download hash is required" }) // sha512
-						.regex(/^[a-f0-9]{128}$/, "Download hash must be a valid sha512 hash"),
+					win: z
+						.object({
+							url: z.string({ message: "Download URL is required" }).url("Invalid URL"),
+							filename: z.string({ message: "Filename is required" }),
+							hash: z
+								.string({ message: "Download hash is required" })
+								.regex(/^[a-f0-9]{128}$/, "Download hash must be a valid sha512 hash"),
+						})
+						.optional(),
+					linux: z
+						.object({
+							url: z.string({ message: "Download URL is required" }).url("Invalid URL"),
+							filename: z.string({ message: "Filename is required" }),
+							hash: z
+								.string({ message: "Download hash is required" })
+								.regex(/^[a-f0-9]{128}$/, "Download hash must be a valid sha512 hash"),
+						})
+						.optional(),
 					changes: z.string({ message: "Changelist must be a string" }).optional(),
 					default: z.boolean({ message: "is default version must be a boolean" }).optional().default(false),
 					modified: z
 						.string({ message: "Modified date is required" })
 						.datetime("Modified date must be a valid date"),
+
+					// platform this version is for
+					// windows = windows only (can be run with wine though??? TODO???)
+					// linux = linux native only
+					// both = both windows and linux native
+					platform: z.enum(["linux", "windows", "both"], {
+						message: "Platform must be 'linux', 'windows' or 'both'",
+					}),
+					notes: z.string({ message: "Platform notes must be a string" }).optional(),
 				},
 				{
 					message: "Version object is required",
@@ -110,14 +143,15 @@ await Bun.write("fnf-manager-assets/db-schema.json", JSON.stringify(dbjsonSchema
 const projectjsonSchema = zodToJsonSchema(projectSchema, "projectSchema");
 await Bun.write("fnf-manager-assets/project-schema.json", JSON.stringify(projectjsonSchema, null, 2));
 
-export async function check() {
+export async function check(): Promise<DBApi | false> {
 	// Check current db passes
+	let db: null | DBApi = null;
 	try {
-		const db: DBApi = DBSchema.parse(await Bun.file("./fnf-manager-assets/db.json").json());
+		db = DBSchema.parse(await Bun.file("./fnf-manager-assets/db.json").json());
 		console.log("DB passes, last updated", new Date(db.updated));
 	} catch (e) {
 		console.error("DB failed", e);
-		return false
+		return false;
 	}
 
 	// Check all projects pass
@@ -130,6 +164,10 @@ export async function check() {
 			let defaults = 0;
 			for (const version of project.versions) {
 				if (version.default) defaults++;
+				if ((version.platform === "linux" || version.platform === "both") && !version.linux)
+					throw new Error("Linux version missing, but platform is linux");
+				if ((version.platform === "windows" || version.platform === "both") && !version.win)
+					throw new Error("Windows version missing, but platform is windows");
 			}
 			if (defaults !== 1) throw new Error("Project must have exactly one default version, has " + defaults);
 
@@ -142,6 +180,8 @@ export async function check() {
 	}
 	console.log("Projects passed", passed, "out of", total, "(" + Math.round((passed / total) * 10000) / 100 + "%)");
 	if (passed !== total) return false;
+
+	return db;
 }
 
 // if running as a script, check the files

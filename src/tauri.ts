@@ -8,5 +8,5 @@ export async function run<Name extends keyof RustFunctions>(
 }
 
 interface RustFunctions {
-	greet: [{ name: string }, string];
+	http_get: [{ url: string }, string];
 }

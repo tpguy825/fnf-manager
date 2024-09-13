@@ -3,13 +3,23 @@
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn http_get(url: &str) -> String {
+    // http get with headers
+    let client = reqwest::blocking::Client::new();
+    let res = client
+        .get(url)
+        .header("User-Agent", "fnf-manager")
+        .header("Cache-Control", "no-cache")
+        .send()
+        .expect("request failed");
+
+    res.text().expect("failed to read response body")
 }
 
 fn main() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet])
+    tauri::Builder
+        ::default()
+        .invoke_handler(tauri::generate_handler![http_get])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

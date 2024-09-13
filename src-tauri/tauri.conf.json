@@ -7,7 +7,7 @@
 	},
 	"package": {
 		"productName": "fnf-manager",
-		"version": "0.1.0"
+		"version": "0.1.1"
 	},
 	"tauri": {
 		"allowlist": {
@@ -19,9 +19,9 @@
 		},
 		"windows": [
 			{
-				"title": "fnf-manager",
-				"width": 800,
-				"height": 600
+				"title": "FNF Manager",
+				"width": 1080,
+				"height": 780
 			}
 		],
 		"security": {
@@ -30,7 +30,7 @@
 		"bundle": {
 			"active": true,
 			"targets": "all",
-			"identifier": "com.fnf-manager.app",
+			"identifier": "com.tpguy825.fnf-manager",
 			"icon": [
 				"icons/32x32.png",
 				"icons/128x128.png",

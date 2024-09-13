@@ -2,7 +2,7 @@
 name = "fnf-manager"
 version = "0.1.0"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["tpguy825"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,6 +11,7 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
+reqwest = { version = "0.12.7", features = ["blocking"] }
 tauri = { version = "1", features = ["shell-open"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
